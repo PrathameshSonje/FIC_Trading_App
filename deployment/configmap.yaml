@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myapp-config-volume
+data:
+  application.yml: |-
+    spring:
+      application:
+        name: devops-capstone
+      jpa:
+        database-platform: org.hibernate.dialect.H2Dialect
+        show-sql: true
+        hibernate:
+          ddl-auto: update
+      h2:
+        console:
+          enabled: true
+          path: /h2-console
+          settings.trace: true
+          settings.web-allow-others: false
+
+    server:
+      servlet:
+        context-path: /
+      port: 8888
+
+    h2.database:
+      jdbcUrl: jdbc:h2:mem:ProductsDB
+      driverClassName: org.h2.Driver
+      username: sa
+      password: password
