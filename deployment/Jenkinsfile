@@ -1,0 +1,84 @@
+pipeline{
+	agent any
+	
+	tools {
+		maven "mvn"
+	}
+	stages {
+		stage ('Build'){
+			steps{
+			
+			// get code from github
+			git url: 'https://github.com/PrathameshSonje/FIC_Trading_App.git'
+			
+			script{
+				if(isUnix()){
+					sh "mvn clean package"
+				}
+				else{
+					bat "mvn clean package"
+				}
+			}
+			}
+		}
+		stage('Integration Test'){
+			steps{
+			script{
+				if(isUnix()){
+					sh "mvn clean verify"
+				}
+				else{
+					bat "mvn clean verify"
+				}
+			}
+			}
+		}
+		stage('Build Docker Image and Push Image To Hub'){
+			steps{
+			script{
+				if(isUnix()){
+					sh "docker buildx build . --platform linux/arm64 --tag kpradeep/my-app:latest --push"
+				}
+				else{
+					bat "docker buildx build . --platform linux/arm64 --tag kpradeep/my-app:latest --push"
+				}
+			}
+			}
+		}
+		stage('Deploy To Cloud'){
+			steps{
+			script{
+				if(isUnix()){
+					sh "kubectl apply -f deployment"
+				}
+				else{
+					bat "kubectl apply -f deployment"
+				}
+			}
+			}
+		}
+		stage('SonarQubeCodeAnalysis'){
+			steps{
+			script{
+				if(isUnix()){
+					sh "mvn sonar:sonar"
+				}
+				else{
+					bat "mvn sonar:sonar"
+				}
+			}
+			}
+		}
+		
+	}
+	post{
+		success{
+			jacoco(
+				classPattern: '**/target/classes',
+				sourcePattern: '**/src/main/java'
+			)
+			junit '**/target/surefire-reports/TEST-*.xml'
+			archiveArtifacts 'target/*.jar'
+		}
+	}
+}
